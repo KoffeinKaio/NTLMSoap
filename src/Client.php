@@ -1,7 +1,8 @@
 <?php
 
 namespace NTLMSoap;
-
+use Exception;
+require_once("HttpStream/NTLMStream.php");
 
 class Client extends \SoapClient {
 
