@@ -2,13 +2,8 @@
 
 namespace NTLMSoap;
 
-use Exception;
-use \Psr\Log\LoggerAwareInterface;
-use \Psr\Log\LoggerAwareTrait;
-use \Psr\Log\LoggerInterface;
 
 class Client extends \SoapClient {
-	use LoggerAwareTrait;
 
 	private $options = Array();
 	private $__last_request;
@@ -17,14 +12,10 @@ class Client extends \SoapClient {
 	 *
 	 * @param String $url The WSDL url
 	 * @param Array $data Soap options, it should contain ntlm_username and ntlm_password fields
-	 * @param LoggerAwareInterface|LoggerInterface $logger
 	 * @throws Exception
 	 * @see \SoapClient::__construct()
 	 */
-	public function __construct($url, $data, LoggerInterface $logger = null){
-		if($logger){
-			$this->setLogger($logger);
-		}
+	public function __construct($url, $data){
 
 		$this->options = $data;
 
@@ -42,10 +33,6 @@ class Client extends \SoapClient {
 
 			$time_start = microtime(true);
 			parent::__construct($url, $data);
-
-			if(!empty($this->logger) && (($end_time = microtime(true) - $time_start) > 0.1)){
-				$this->logger->debug("WSDL Timer", Array("time" => $end_time, "url" => $url));
-			}
 
 			stream_wrapper_restore('http');
 		}
@@ -80,23 +67,6 @@ class Client extends \SoapClient {
 		}
 
 		$response = curl_exec($ch);
-
-		if(!empty($this->logger)) {
-			// Log as an error if the curl call isn't a success
-			$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			$log_func = $http_status == 200 ? 'debug' : 'error';
-
-			// Log the call
-			$this->logger->$log_func("SoapCall: " . $action, array(
-				"Location" => $location,
-				"HttpStatus" => $http_status,
-				"Request" => $request,
-				"Response" => strlen($response) > 2000 ? substr($response, 0, 2000) . "..." : $response,
-				"RequestTime" => curl_getinfo($ch, CURLINFO_TOTAL_TIME),
-				"RequestConnectTime" => curl_getinfo($ch, CURLINFO_CONNECT_TIME),
-				"Time" => microtime(true) - $start_time
-			));
-		}
 		return $response;
 	}
 
